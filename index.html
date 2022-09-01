@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Graph</title>
+    </head>
+    <body>
+        <h3 id="symbol">BTCUSDT</h3>
+        <div class="chart-container" style="position: flex; height:90vh; width:99vw;">
+            <canvas id="myChart"></canvas>
+        </div>
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+
+        var getCookies = function(){
+            var pairs = document.cookie.split(";");
+            var cookies = [];
+            if(pairs.length >= 2) {
+                for (var i=0; i < pairs.length; i++){
+                    var pair = pairs[i].split("=");
+                    cookies[(pair[0]+'').trim()] = JSON.parse(decodeURIComponent(pair.pop().split(';').shift()))
+                }
+            }
+            return cookies;
+        }
+
+        let labels = []
+        let dataSymb = []
+
+        function updateData() {
+            fetch("api.php", {
+                    "headers": {
+                },
+                "referrerPolicy": "strict-origin-when-cross-origin",
+                "body": null,
+                "method": "GET",
+                "mode": "cors",
+                "credentials": "include"
+            }).then(() => {
+                for (const [key, value] of Object.entries(getCookies())) {
+                    let cookie = (key.indexOf("graph") == 0) ? value : null
+                    if(cookie != null) {
+                        console.log('go')
+                        labels.push(new Date(cookie.openTime).toLocaleTimeString("en-US"))
+                        dataSymb.push(cookie.volume)
+                    }
+                }
+                lineChart.data.labels = labels
+                lineChart.data.datasets[0].data = dataSymb 
+                lineChart.update()
+            })
+        }
+
+        setInterval(function() {
+
+            updateData()
+            
+        }, 5000)
+
+        updateData()
+
+        const ctx = document.getElementById('myChart')
+
+        var binanceData = {
+            labels: labels,
+            datasets: [{
+                label: document.getElementById('symbol').innerText,
+                data: dataSymb,
+            }]
+        };
+
+        var chartOptions = {
+            legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                    boxWidth: 80,
+                    fontColor: 'black'
+                }
+            }
+        }
+
+        var lineChart = new Chart(ctx, {
+            type: 'line',
+            data: binanceData,
+            options: chartOptions
+        })
+    </script>
+</html>
